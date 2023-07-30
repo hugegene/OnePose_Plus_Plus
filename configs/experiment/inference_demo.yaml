@@ -1,7 +1,7 @@
 # @package _global_
 
 type: inference
-
+#
 # data_base_dir: "data/portal_filter/demo demo-test"
 # sfm_base_dir: "data/train_portal_filter/sfm_output/outputs_softmax_loftr_loftr/0001-portal_filter"
 # data_base_dir: "/home/eugene/OnePose_Plus_Plus/data/portal_filter_base2/0001-base base-1"
