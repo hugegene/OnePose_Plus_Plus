@@ -8,11 +8,11 @@ type: inference
 # sfm_base_dir: "/home/eugene/OnePose_Plus_Plus/data/portal_filter_base2/sfm_output/outputs_softmax_loftr_loftr/0001-base"
 # data_base_dir: "/home/eugene/OnePose_Plus_Plus/data/train_portal_filter_on_black_scale/0001-portal portal2-annotate"
 # sfm_base_dir: "/home/eugene/OnePose_Plus_Plus/data/train_portal_filter_on_black_scale/sfm_output/outputs_softmax_loftr_loftr/0001-portal"
-data_base_dir: "/home/eugene/OnePose_Plus_Plus/data/train_rotating_portafilter_astar/0001-porta porta1-annotate"
-sfm_base_dir: "/home/eugene/OnePose_Plus_Plus/data/train_rotating_portafilter_astar/sfm_output/outputs_softmax_loftr_loftr/0001-porta"
+data_base_dir: "data/train_rotating_portafilter_astar/0001-porta porta1-annotate"
+sfm_base_dir: "data/train_rotating_portafilter_astar/sfm_output/outputs_softmax_loftr_loftr/0001-porta"
 
 model:
-  pretrained_ckpt: /home/eugene/OnePose_Plus_Plus/weight/OnePosePlus_model.ckpt
+  pretrained_ckpt: OnePose_Plus_Plus/weight/OnePosePlus_model.ckpt
   # pretrained_ckpt: /home/eugene/OnePose_Plus_Plus/models/checkpoints/train_portal_filter_on_black_scale3/last.ckpt
 
   OnePosePlus:
@@ -25,7 +25,7 @@ model:
         block_dims: [128, 196, 256]
         output_layers: [3, 1]
 
-      pretrained: "/home/eugene/OnePose_Plus_Plus/weight/LoFTR_wsize9.ckpt"
+      pretrained: "OnePose_Plus_Plus/weight/LoFTR_wsize9.ckpt"
       pretrained_fix: False
 
     interpol_type: "bilinear" # ['nearest', 'bilinear']

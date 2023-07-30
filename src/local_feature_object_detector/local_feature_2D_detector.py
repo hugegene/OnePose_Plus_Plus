@@ -1,4 +1,5 @@
 import os.path as osp
+import os
 import cv2
 import torch
 import numpy as np
@@ -10,10 +11,15 @@ from src.utils.colmap.read_write_model import read_model
 from src.utils.data_utils import get_K_crop_resize, get_image_crop_resize
 from src.utils.vis_utils import reproj
 
+
+cwd = os.getcwd()
+if not cwd.endswith("OnePose_Plus_Plus"):
+    cwd = osp.join(cwd, "OnePose_Plus_Plus")
+
 cfgs = {
     "model": {
         "method": "LoFTR",
-        "weight_path": "/home/eugene/OnePose_Plus_Plus/weight/LoFTR_wsize9.ckpt",
+        "weight_path": osp.join(cwd, "weight/LoFTR_wsize9.ckpt"),
         "seed": 666,
     },
 }
@@ -57,12 +63,14 @@ class LocalFeatureObjectDetector():
 
         for idx in range(1, len(images), sample_gap):
             db_img_path = db_image_paths[idx]
+            split = db_img_path.split("/")
+            db_img_path = "/".join(split[4:])
+            db_img_path = osp.join(cwd, db_img_path)
+            rejoin = "/".join(split[4:-2])
 
-            split = db_img_path.split("/")[:-2]
-            rejoin = "/".join(split)
 
             if rejoin not in scaledict:
-                scalefile = osp.join(rejoin,"Box.txt")
+                scalefile = osp.join(cwd, rejoin, "Box.txt")
                 with open(scalefile, 'r') as f:
                     lines = f.readlines()
                 data = [float(e) for e in lines[1].strip().split(',')]
