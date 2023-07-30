@@ -35,14 +35,19 @@ def read_grayscale(path, resize=None, resize_float=False, df=None,
                    pad_to=None, ret_scales=False, ret_pad_mask=False,
                    augmentor=None):
     resize = tuple(resize) if resize is not None else None
-    assert osp.exists(path), f"image path: {path} not exists!"
-    if augmentor is None:
-        image = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+    
+
+    if isinstance(path, str):
+        assert osp.exists(path), f"image path: {path} not exists!"
+        if augmentor is None:
+            image = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
+        else:
+            image = cv2.imread(str(path), cv2.IMREAD_COLOR)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = augmentor(image)
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     else:
-        image = cv2.imread(str(path), cv2.IMREAD_COLOR)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = augmentor(image)
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        image = path
 
     assert image is not None, f"path: {path} image not properly loaded"
     w, h = image.shape[1], image.shape[0]

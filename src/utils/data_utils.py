@@ -280,6 +280,7 @@ def get_K_crop_resize(box, K_orig, resize_shape):
     return K_crop, K_crop_homo
 
 def get_K(intrin_file):
+    print(intrin_file)
     assert Path(intrin_file).exists()
     with open(intrin_file, 'r') as f:
         lines = f.readlines()

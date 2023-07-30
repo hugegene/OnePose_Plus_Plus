@@ -1,0 +1,29 @@
+# @package _global_
+
+type: merge_anno
+task_name: onepose_plus_train
+match_type: 'softmax'
+split: 'train'
+
+data_base_dir: 'data/train_portal_filter_on_black_scale'
+sfm_dir: 'data/train_portal_filter_on_black_scale/sfm_output'
+merge_output_dir: 'data/train_portal_filter_on_black_scale/merged_anno'
+
+names:
+    # Train Set
+    - '0001'
+
+network:
+    detection: loftr
+    matching: loftr
+
+datamodule:
+    data_dir: ${data_base_dir}
+    sfm_dir: ${sfm_dir}
+
+    out_path: ${merge_output_dir}/${task_name}/${split}.json
+
+
+hydra:
+    run:
+        dir: ${work_dir}

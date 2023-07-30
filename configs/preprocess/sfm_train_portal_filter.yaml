@@ -2,9 +2,11 @@
 
 type: sfm
 work_dir: ${hydra:runtime.cwd}
+data_base_dir: "${work_dir}/data/train_rotating_portafilter_astar"
+output_base_dir: "data/train_rotating_portafilter_astar/sfm_output"
+
 match_type: "softmax"
 enable_post_refine: True
-verbose: True
 
 overwrite_all: True
 overwrite_coarse: True
@@ -13,13 +15,27 @@ overwrite_fine: True
 use_global_ray: False
 use_local_ray: False
 
+ray:
+  slurm: False
+  n_workers: 4
+  n_cpus_per_worker: 5
+  n_gpus_per_worker: 1
+  local_mode: False
+
 dataset:
   max_num_kp3d: 15000
+  max_num_kp2d: 10000
 
-  data_dir:
-    - null # Will be filled by demo_pipeline.sh
+  data_dir: ${data_base_dir}
+  top_k_obj: null
+  num_seq: 2 #null # Use all sequences!
+  ids:
+    - '0001'
 
-  outputs_dir: null # Will be filled by demo_pipeline.sh
+  exception_obj_names:
+    -
+
+  outputs_dir: ${output_base_dir}
 
 network:
   detection: loftr
@@ -27,11 +43,9 @@ network:
 
 sfm:
   gen_cov_from: 'pose'
-  # gen_cov_from: 'index'
   down_ratio: 5
   gap: 3
   covis_num: 10
-  # covis_num: -1
   min_rotation: 10
 
 post_optim:
@@ -43,10 +57,9 @@ post_optim:
     optimize_lr:
       depth: 0.03
 
-
 post_process:
   filter_bbox_before_filter_track_length: True
   skip_bbox_filter: False
-  # skip_bbox_filter: True
 
+verbose: True
 disable_lightning_logs: True

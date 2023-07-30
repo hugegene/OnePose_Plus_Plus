@@ -220,3 +220,35 @@ class OnePosePlusInferenceDataset(Dataset):
             )
 
         return data
+    
+    def preprocess(self, image_path):
+
+        query_img, query_img_scale, query_img_mask = read_grayscale(
+            image_path,
+            resize=self.img_resize,
+            pad_to=self.img_resize if self.img_pad else None,
+            ret_scales=True,
+            ret_pad_mask=True,
+            df=self.df,
+        )
+        self.h_origin = query_img.shape[1] * query_img_scale[0]
+        self.w_origin = query_img.shape[2] * query_img_scale[1]
+        self.query_img_scale = query_img_scale
+        
+        data = {}
+
+        if self.avg_coarse_descriptors3d is not None:
+            data.update({
+                "descriptors3d_coarse_db": self.avg_coarse_descriptors3d[None],  # [1, dim, n2]
+            })
+
+        data.update(
+            {
+                "keypoints3d": self.keypoints3d[None],  # [1, n2, 3]
+                "descriptors3d_db": self.avg_descriptors3d[None],  # [1, dim, n2]
+                "query_image": query_img[None],  # [1*h*w]
+                "query_image_path": image_path,
+            }
+        )
+
+        return data

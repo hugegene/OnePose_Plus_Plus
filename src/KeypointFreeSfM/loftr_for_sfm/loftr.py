@@ -2,7 +2,12 @@ import torch
 import torch.nn as nn
 from einops.einops import rearrange
 import sys
-sys.path.append('submodules/LoFTR/src')
+import os
+
+if not os.getcwd().endswith("OnePose_Plus_Plus"):
+    sys.path.append('OnePose_Plus_Plus/submodules/LoFTR/src')
+else:
+    sys.path.append('submodules/LoFTR/src')
 
 from loftr.backbone import build_backbone
 from loftr.utils.position_encoding import PositionEncodingSine

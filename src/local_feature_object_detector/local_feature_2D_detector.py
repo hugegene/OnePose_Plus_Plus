@@ -13,7 +13,7 @@ from src.utils.vis_utils import reproj
 cfgs = {
     "model": {
         "method": "LoFTR",
-        "weight_path": "weight/LoFTR_wsize9.ckpt",
+        "weight_path": "/home/eugene/OnePose_Plus_Plus/weight/LoFTR_wsize9.ckpt",
         "seed": 666,
     },
 }
@@ -38,7 +38,7 @@ class LocalFeatureObjectDetector():
     def __init__(self, sfm_ws_dir, n_ref_view=15, output_results=False, detect_save_dir=None, K_crop_save_dir=None):
         matcher = build_2D_match_model(cfgs['model']) 
         self.matcher = matcher.cuda()
-        self.db_imgs, self.db_corners_homo = self.load_ref_view_images(sfm_ws_dir, n_ref_view)
+        self.db_imgs, self.db_corners_homo, self.scales = self.load_ref_view_images(sfm_ws_dir, n_ref_view)
         self.output_results = output_results
         self.detect_save_dir = detect_save_dir
         self.K_crop_save_dir = K_crop_save_dir
@@ -52,8 +52,24 @@ class LocalFeatureObjectDetector():
 
         db_imgs = []  # id: image
         db_corners_homo = []
+        scales = []
+        scaledict = {}
+
         for idx in range(1, len(images), sample_gap):
             db_img_path = db_image_paths[idx]
+
+            split = db_img_path.split("/")[:-2]
+            rejoin = "/".join(split)
+
+            if rejoin not in scaledict:
+                scalefile = osp.join(rejoin,"Box.txt")
+                with open(scalefile, 'r') as f:
+                    lines = f.readlines()
+                data = [float(e) for e in lines[1].strip().split(',')]
+                scale = data[10]
+                scaledict[rejoin] = scale
+
+            scales += [scaledict[rejoin]]
 
             db_img = cv2.imread(db_img_path, cv2.IMREAD_GRAYSCALE)
             db_imgs.append(torch.from_numpy(db_img)[None][None] / 255.0)
@@ -68,8 +84,7 @@ class LocalFeatureObjectDetector():
                     ]
                 ).T  # 3*4
             )
-
-        return db_imgs, db_corners_homo
+        return db_imgs, db_corners_homo, scales
 
     @torch.no_grad()
     def match_worker(self, query):
@@ -87,10 +102,15 @@ class LocalFeatureObjectDetector():
                 img_center = (query.shape[-1] // 2, query.shape[-2] // 2)
                 detect_results_dict[idx] = {
                     "inliers": inliers,
-                    "bbox": np.array([img_center[0] - 500, img_center[1] - 500, img_center[0] + 500, img_center[1] + 500]) # [w,h]
+                    "bbox": np.array([img_center[0] - 500, img_center[1] - 500, img_center[0] + 500, img_center[1] + 500]), # [w,h]
+                    "scale": self.scales[idx]
                 }
                 continue
-
+            # print("hehhehehehehehehehhsshshhshshshshshshshs")
+            # print(idx)
+            # print(match_data["image0"])
+            # import time
+            # time.sleep(1000)
             affine, inliers = cv2.estimateAffine2D(
                 mkpts0, mkpts1, method=cv2.RANSAC, ransacReprojThreshold=6
             )
@@ -113,6 +133,7 @@ class LocalFeatureObjectDetector():
             detect_results_dict[idx] = {
                 "inliers": inliers,
                 "bbox": np.array([x0, y0, x1, y1]),
+                "scale": self.scales[idx]
             }
         return detect_results_dict
 
@@ -128,7 +149,7 @@ class LocalFeatureObjectDetector():
                 key=lambda item: item[1]["inliers"].sum(),
             )
         ]
-        return detect_results_dict[idx_sorted[0]]["bbox"]
+        return detect_results_dict[idx_sorted[0]]["bbox"], detect_results_dict[idx_sorted[0]]["scale"]
 
     def crop_img_by_bbox(self, query_img_path, bbox, K=None, crop_size=512):
         """
@@ -143,7 +164,10 @@ class LocalFeatureObjectDetector():
         """
         x0, y0 = bbox[0], bbox[1]
         x1, y1 = bbox[2], bbox[3]
-        origin_img = cv2.imread(query_img_path, cv2.IMREAD_GRAYSCALE)
+        if isinstance(query_img_path, str):
+            origin_img = cv2.imread(query_img_path, cv2.IMREAD_GRAYSCALE)
+        else:
+            origin_img = query_img_path
 
         resize_shape = np.array([y1 - y0, x1 - x0])
         if K is not None:
@@ -184,18 +208,18 @@ class LocalFeatureObjectDetector():
             query_inp = query_img.cuda()
         
         # Detect bbox and crop image:
-        bbox = self.detect_by_matching(
+        bbox, scale = self.detect_by_matching(
             query=query_inp,
         )
         image_crop, K_crop = self.crop_img_by_bbox(query_img_path, bbox, K, crop_size=crop_size)
-        self.save_detection(image_crop, query_img_path)
-        self.save_K_crop(K_crop, query_img_path)
+        # self.save_detection(image_crop, query_img_path)
+        # self.save_K_crop(K_crop, query_img_path)
 
         # To Tensor:
         image_crop = image_crop.astype(np.float32) / 255
         image_crop_tensor = torch.from_numpy(image_crop)[None][None].cuda()
 
-        return bbox, image_crop_tensor, K_crop
+        return bbox, image_crop_tensor, K_crop, scale
     
     def previous_pose_detect(self, query_img_path, K, pre_pose, bbox3D_corner, crop_size=512):
         """
@@ -217,8 +241,8 @@ class LocalFeatureObjectDetector():
         bbox = np.array([x0, y0, x1, y1]).astype(np.int32)
 
         image_crop, K_crop = self.crop_img_by_bbox(query_img_path, bbox, K, crop_size=crop_size)
-        self.save_detection(image_crop, query_img_path)
-        self.save_K_crop(K_crop, query_img_path)
+        # self.save_detection(image_crop, query_img_path)
+        # self.save_K_crop(K_crop, query_img_path)
 
         # To Tensor:
         image_crop = image_crop.astype(np.float32) / 255

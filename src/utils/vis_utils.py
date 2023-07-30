@@ -58,6 +58,12 @@ def draw_3d_box(image, corners_2d, linewidth=3, color="g"):
     return image
 
 
+def draw_3d_model(image, points):
+    for pt in points:
+        cv2.circle(image, (int(pt[0]), int(pt[1])), 1, (255, 0, 0), 1)
+    return image
+
+
 def draw_2d_box(image, corners_2d, linewidth=3):
     """Draw 2d box corners
     @param corners_2d: [x_left, y_top, x_right, y_bottom]
@@ -80,7 +86,7 @@ def add_pointcloud_to_vis3d(pointcloud_pth, dump_dir, save_name):
     vis3d.add_point_cloud(pointcloud_pth, name="filtered_pointcloud")
 
 
-def save_demo_image(pose_pred, K, image_path, box3d, draw_box=True, save_path=None):
+def save_demo_image(pose_pred, K, image_path, box3d, model_pc=[], draw_box=True, save_path=None):
     """ 
     Project 3D bbox by predicted pose and visualize
     """
@@ -92,11 +98,72 @@ def save_demo_image(pose_pred, K, image_path, box3d, draw_box=True, save_path=No
     if draw_box:
         reproj_box_2d = reproj(K, pose_pred, box3d)
         draw_3d_box(image_full, reproj_box_2d, color='b', linewidth=10)
+        if len(model_pc) >0: 
+            reproj_model_2d = reproj(K, pose_pred, model_pc)
+            draw_3d_model(image_full, reproj_model_2d)
     
     if save_path is not None:
         Path(save_path).parent.mkdir(exist_ok=True, parents=True)
 
         cv2.imwrite(save_path, image_full)
+    return image_full
+
+
+def draw_demo_image(pose_pred, K, image_path, box3d, model_pc=[], draw_box=True, save_path=None):
+    """ 
+    Project 3D bbox by predicted pose and visualize
+    """
+    if isinstance(box3d, str):
+        box3d = np.loadtxt(box3d)
+    
+    # image_full = cv2.imread(image_path)
+
+    if isinstance(image_path, str):
+        image_full = cv2.imread(image_path)
+    else:
+        image_full = image_path
+
+    if draw_box:
+        
+        reproj_box_2d = reproj(K, pose_pred, box3d)
+        draw_3d_box(image_full, reproj_box_2d, color='b', linewidth=10)
+        if len(model_pc) >0: 
+            reproj_model_2d = reproj(K, pose_pred, model_pc)
+            draw_3d_model(image_full, reproj_model_2d)
+
+    image_full = cv2.resize(image_full, (600, int(image_full.shape[0]*(600/image_full.shape[1]))))
+    image_full = cv2.cvtColor(image_full,cv2.COLOR_GRAY2RGB)
+        
+    return image_full
+
+def show_demo_image(pose_pred, K, image_path, box3d, model_pc=[], draw_box=True, save_path=None):
+    """ 
+    Project 3D bbox by predicted pose and visualize
+    """
+    if isinstance(box3d, str):
+        box3d = np.loadtxt(box3d)
+    
+    # image_full = cv2.imread(image_path)
+
+    if isinstance(image_path, str):
+        image_full = cv2.imread(image_path)
+    else:
+        image_full = image_path
+
+    if draw_box:
+        
+        reproj_box_2d = reproj(K, pose_pred, box3d)
+        draw_3d_box(image_full, reproj_box_2d, color='b', linewidth=10)
+        if len(model_pc) >0: 
+            reproj_model_2d = reproj(K, pose_pred, model_pc)
+            draw_3d_model(image_full, reproj_model_2d)
+        
+    cv2.imshow("show", image_full)
+    cv2.waitKey(1)
+    # if save_path is not None:
+    #     Path(save_path).parent.mkdir(exist_ok=True, parents=True)
+        
+        # cv2.imwrite(save_path, image_full)
     return image_full
 
 def make_video(image_path, output_video_path):

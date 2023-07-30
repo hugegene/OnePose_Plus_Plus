@@ -163,6 +163,8 @@ def transform_points2D(keypoints, pba=None, verbose=True):
         keypoints_items = keypoints.items()
 
     for k, v in keypoints_items:
+        # try:
+        print(k,v)
         v = {_k: _v for _k, _v in v.items() if len(_k) == 2}
         kpts = np.array([list(kpt) for kpt in v.keys()]).astype(np.float32)
         scores = np.array([s[-1] for s in v.values()]).astype(np.float32)
@@ -171,6 +173,8 @@ def transform_points2D(keypoints, pba=None, verbose=True):
         ret_scores[k] = scores
         if pba is not None:
             pba.update.remote(1)
+        # except:
+        #     print("skipping keypoint")
     return ret_kpts, ret_scores
 
 @ray.remote(num_cpus=1)

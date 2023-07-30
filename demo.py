@@ -49,12 +49,14 @@ def get_default_paths(cfg, data_root, data_dir, sfm_model_dir):
     intrin_full_dir = osp.join(data_dir, 'intrin_full')
 
     bbox3d_path = osp.join(data_root, 'box3d_corners.txt')
+    pointcloud_path = osp.join(data_root, 'model_pointcloud.txt')
     paths = {
         "data_root": data_root,
         "data_dir": data_dir,
         "sfm_dir": sfm_model_dir,
         "sfm_ws_dir": sfm_ws_dir,
         "bbox3d_path": bbox3d_path,
+        "pointcloud_path": pointcloud_path,
         "intrin_full_path": intrin_full_path,
         "intrin_full_dir": intrin_full_dir,
         "vis_detector_dir": vis_detector_dir,
@@ -65,7 +67,9 @@ def get_default_paths(cfg, data_root, data_dir, sfm_model_dir):
     return img_lists, paths
 
 def inference_core(cfg, data_root, seq_dir, sfm_model_dir):
+    
     img_list, paths = get_default_paths(cfg, data_root, seq_dir, sfm_model_dir)
+
     dataset = OnePosePlusInferenceDataset(
         paths['sfm_dir'],
         img_list,
@@ -94,7 +98,9 @@ def inference_core(cfg, data_root, seq_dir, sfm_model_dir):
     K, _ = data_utils.get_K(paths["intrin_full_path"])
 
     bbox3d = np.loadtxt(paths["bbox3d_path"])
+    # pointcloud_model = np.loadtxt(paths["pointcloud_path"])
     pred_poses = {}  # {id:[pred_pose, inliers]}
+    scale = 1
     for id in tqdm(range(len(dataset))):
         data = dataset[id]
         query_image = data['query_image']
@@ -103,14 +109,14 @@ def inference_core(cfg, data_root, seq_dir, sfm_model_dir):
         # Detect object:
         if id == 0:
             # Detect object by 2D local feature matching for the first frame:
-            bbox, inp_crop, K_crop = local_feature_obj_detector.detect(query_image, query_image_path, K)
+            bbox, inp_crop, K_crop, scale = local_feature_obj_detector.detect(query_image, query_image_path, K)
         else:
             # Use 3D bbox and previous frame's pose to yield current frame 2D bbox:
             previous_frame_pose, inliers = pred_poses[id - 1]
 
             if len(inliers) < 20:
                 # Consider previous pose estimation failed, reuse local feature object detector:
-                bbox, inp_crop, K_crop = local_feature_obj_detector.detect(
+                bbox, inp_crop, K_crop, scale = local_feature_obj_detector.detect(
                     query_image, query_image_path, K
                 )
             else:
@@ -129,20 +135,22 @@ def inference_core(cfg, data_root, seq_dir, sfm_model_dir):
             match_2D_3D_model(data)
         mkpts_3d = data["mkpts_3d_db"].cpu().numpy() # N*3
         mkpts_query = data["mkpts_query_f"].cpu().numpy() # N*2
-        pose_pred, _, inliers, _ = ransac_PnP(K_crop, mkpts_query, mkpts_3d, scale=1000, pnp_reprojection_error=7, img_hw=[512,512], use_pycolmap_ransac=True)
+        pose_pred, _, inliers, _ = ransac_PnP(K_crop, mkpts_query, mkpts_3d, scale=scale, pnp_reprojection_error=7, img_hw=[512,512], use_pycolmap_ransac=False)
 
         pred_poses[id] = [pose_pred, inliers]
 
         # Visualize:
-        vis_utils.save_demo_image(
+        vis_utils.show_demo_image(
+        # vis_utils.save_demo_image(
             pose_pred,
             K,
             image_path=query_image_path,
             box3d=bbox3d,
+            # model_pc=pointcloud_model,
             draw_box=len(inliers) > 20,
             save_path=osp.join(paths["vis_box_dir"], f"{id}.jpg"),
         )
-    
+        
     # Output video to visualize estimated poses:
     logger.info(f"Generate demo video begin...")
     vis_utils.make_video(paths["vis_box_dir"], paths["demo_video_path"])
@@ -154,7 +162,7 @@ def inference(cfg):
     if isinstance(data_dirs, str) and isinstance(sfm_model_dirs, str):
         data_dirs = [data_dirs]
         sfm_model_dirs = [sfm_model_dirs]
-
+    
     for data_dir, sfm_model_dir in tqdm(
         zip(data_dirs, sfm_model_dirs), total=len(data_dirs)
     ):

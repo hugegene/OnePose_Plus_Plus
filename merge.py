@@ -8,7 +8,7 @@ from pathlib import Path
 from loguru import logger
 
 from src.utils.path_utils import get_test_seq_path, get_gt_pose_path_by_color
-
+import time
 
 def merge_train_core(
     anno_2d_file,

@@ -472,7 +472,12 @@ def save_2d_anno(
             kp3d_id_mapping,
             verbose=verbose,
         )
-
+        print("wait hereeeeeeeeee")
+        print(img_path)
+        print(num_matches)
+        print(save_threshold * total_2d_kpts)
+        # import time
+        # time.sleep(1000000)
         if num_matches > save_threshold * total_2d_kpts:
             anno_2d_path = save_2d_anno_for_each_image(
                 cfg,

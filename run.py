@@ -14,7 +14,7 @@ from tqdm import tqdm
 from loguru import logger
 from pathlib import Path
 from omegaconf import DictConfig
-
+import time
 
 from src.utils.ray_utils import ProgressBar, chunks
 
@@ -368,6 +368,8 @@ def postprocess(cfg, img_lists, root_dir, sub_dirs, outputs_dir_root, obj_name):
     feature_coarse_path = (
         osp.splitext(feature_out)[0] + "_coarse" + osp.splitext(feature_out)[1]
     )
+
+    
     feature_process.get_kpt_ann(
         cfg_coarse,
         img_lists,
@@ -402,3 +404,4 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     main()
+    

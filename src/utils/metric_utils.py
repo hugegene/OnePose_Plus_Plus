@@ -190,7 +190,7 @@ def ransac_PnP(
 
             rotation = cv2.Rodrigues(rvec)[0]
 
-            tvec /= scale
+            # tvec /= scale
             pose = np.concatenate([rotation, tvec], axis=-1)
             pose_homo = np.concatenate([pose, np.array([[0, 0, 0, 1]])], axis=0)
 
