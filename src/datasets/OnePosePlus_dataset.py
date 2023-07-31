@@ -257,6 +257,9 @@ class OnePosePlusDataset(Dataset):
 
         color_path = self.coco.loadImgs(int(img_id))[0]["img_file"]
 
+        home_dir = osp.os.path.expanduser('~')
+        color_path = color_path.replace("/home/eugene", home_dir)
+
         query_img, query_img_scale, query_img_mask = read_grayscale(
             color_path,
             resize=self.img_resize,
