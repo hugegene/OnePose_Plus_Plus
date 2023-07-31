@@ -62,6 +62,10 @@ class OnePosePlusDataset(Dataset):
 
     def read_anno2d(self, anno2d_file):
         """ Read (and pad) 2d info"""
+
+        home_dir = osp.os.path.expanduser('~')
+        anno2d_file = anno2d_file.replace("/home/eugene", home_dir)
+
         with open(anno2d_file, "r") as f:
             data = json.load(f)
 
@@ -81,6 +85,10 @@ class OnePosePlusDataset(Dataset):
         load_3d_coarse=False,
     ):
         """ Read(and pad) 3d info"""
+
+        home_dir = osp.os.path.expanduser('~')
+        avg_anno3d_file = avg_anno3d_file.replace("/home/eugene", home_dir)
+
         avg_data = np.load(avg_anno3d_file)
 
         keypoints3d = torch.Tensor(avg_data["keypoints3d"])  # [m, 3]
