@@ -35,7 +35,9 @@ def read_grayscale(path, resize=None, resize_float=False, df=None,
                    pad_to=None, ret_scales=False, ret_pad_mask=False,
                    augmentor=None):
     resize = tuple(resize) if resize is not None else None
-    
+
+    home_dir = osp.os.path.expanduser('~')
+    path = path.replace("/home/eugene",home_dir)
 
     if isinstance(path, str):
         assert osp.exists(path), f"image path: {path} not exists!"
