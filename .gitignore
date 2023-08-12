@@ -223,7 +223,6 @@ profile_default/
 ipython_config.py
 .idea/
 *.jpg
-data/
 logs/
 outputs/
 *.DS_Store
@@ -231,7 +230,6 @@ temp/
 visual/
 .hydra/*.yaml
 # *.yaml
-weight
 /models
 command
 *.png
